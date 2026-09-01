@@ -56,9 +56,10 @@ io.on("connection", (socket) => {
 
 
     // دخول غرفة
-   socket.on("joinRoom", (roomCode) => {
+ socket.on("joinRoom", (data) => {
 
-    roomCode = roomCode.toUpperCase();
+    const roomCode = data.roomCode.toUpperCase();
+    const playerName = data.name;
 
     const room =
         io.sockets.adapter.rooms.get(roomCode);
@@ -72,33 +73,54 @@ io.on("connection", (socket) => {
         return;
     }
 
-    if (room && room.size >= 2) {
+    if (room.size >= 2) {
 
-    socket.emit("joinError", {
-        message: "الغرفة ممتلئة!"
-    });
+        socket.emit("joinError", {
+            message: "الغرفة ممتلئة!"
+        });
 
-    return;
-}
+        return;
+    }
 
     socket.join(roomCode);
-       console.log(
-    "Players in room:",
-    io.sockets.adapter.rooms.get(roomCode)?.size
-);
 
     socket.data.roomCode = roomCode;
+    socket.data.playerName = playerName;
 
+    const players = [];
+
+    for (const socketId of room) {
+
+        const playerSocket =
+            io.sockets.sockets.get(socketId);
+
+        if (playerSocket) {
+
+            players.push({
+                name: playerSocket.data.playerName || "لاعب"
+            });
+
+        }
+
+    }
+
+    // إخبار اللاعب الثاني أنه دخل
     socket.emit("roomJoined", {
-        roomCode: roomCode
+        roomCode: roomCode,
+        players: players
     });
 
-    socket.to(roomCode).emit("playerJoined");
+    // إخبار صاحب الغرفة أن اللاعب الثاني دخل
+    socket.to(roomCode).emit("playerJoined", {
+        players: players
+    });
 
     console.log(
         "Player joined room:",
-        roomCode
+        roomCode,
+        playerName
     );
+
 });
 
 
