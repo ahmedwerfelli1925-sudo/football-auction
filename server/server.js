@@ -72,16 +72,20 @@ io.on("connection", (socket) => {
         return;
     }
 
-    if (room.size >= 2) {
+    if (room && room.size >= 2) {
 
-        socket.emit("joinError", {
-            message: "الغرفة ممتلئة!"
-        });
+    socket.emit("joinError", {
+        message: "الغرفة ممتلئة!"
+    });
 
-        return;
-    }
+    return;
+}
 
     socket.join(roomCode);
+       console.log(
+    "Players in room:",
+    io.sockets.adapter.rooms.get(roomCode)?.size
+);
 
     socket.data.roomCode = roomCode;
 
